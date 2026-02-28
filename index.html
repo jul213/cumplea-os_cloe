@@ -1,296 +1,890 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Para Cloe 🎂</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Para Cloe 🎂</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Caveat:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    /* ========================================
+       VARIABLES & RESET
+       ======================================== */
     :root {
-        --verde-whatsapp: #075e54;
-        --verde-claro: #25d366;
-        --fondo-chat: #e5ddd5;
-        --burbuja-bot: #ffffff;
-        --burbuja-yo: #dcf8c6;
+      --verde:       #00c07f;
+      --rosa:        #ff6b9d;
+      --fondo:       #0d0d0d;
+      --fondo2:      #161616;
+      --burbuja-bot: #1e1e1e;
+      --burbuja-yo:  #1a3a2a;
+      --texto:       #f0f0f0;
+      --texto-dim:   #777;
+      --borde:       #2a2a2a;
+      --radius:      18px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-    /* Forzamos que el cuerpo no se mueva */
-    body, html {
-        width: 100%;
-        height: 100%;
-        font-family: 'Poppins', sans-serif;
-        background-color: var(--fondo-chat);
-        overflow: hidden;
-        position: fixed; /* Evita rebotes en el scroll del móvil */
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    #interfaz-chat {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-        height: 100dvh; /* Altura real en móviles */
-        background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
-        background-repeat: repeat;
-        background-size: 400px;
+    /* Prevent iOS bounce & zoom on input focus */
+    html { height: 100%; overflow: hidden; }
+    body {
+      height: 100%; width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+      overflow: hidden;
+      position: fixed;
+      /* Prevent text resize on orientation change */
+      -webkit-text-size-adjust: 100%;
     }
 
+    /* ========================================
+       LAYOUT — usa dvh para móviles con barra de nav
+       ======================================== */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* ========================================
+       CABECERA
+       ======================================== */
     .cabecera {
-        padding: calc(10px + env(safe-area-inset-top)) 15px 10px;
-        background: var(--verde-whatsapp);
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        z-index: 10;
-        flex-shrink: 0;
+      background: var(--fondo2);
+      border-bottom: 1px solid var(--borde);
+      /* safe-area para el notch */
+      padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      z-index: 10;
     }
-
-    .avatar { width: 40px; height: 40px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-
-    /* Este es el cambio clave: el chat ahora deja espacio abajo */
-    #contenedor-chat { 
-        flex: 1;
-        overflow-y: auto;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        -webkit-overflow-scrolling: touch;
-        margin-bottom: 70px; /* Espacio reservado para la barra de abajo */
+    .avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--verde), var(--rosa));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
     }
+    /* Punto verde pulsante de "en línea" */
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .online-dot {
+      position: absolute; bottom: 1px; right: 1px;
+      width: 11px; height: 11px;
+      background: var(--verde);
+      border-radius: 50%;
+      border: 2px solid var(--fondo2);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.3); opacity: 0.7; }
+    }
+    .cabecera-info h1 { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
+    .cabecera-info p  { font-size: 0.7rem; color: var(--verde); }
 
+    /* ========================================
+       ÁREA DE CHAT — flex:1 para llenar espacio
+       ======================================== */
+    #contenedor-chat {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 14px 12px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      scroll-behavior: smooth;
+      /* Momentum scroll en iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+    #contenedor-chat::-webkit-scrollbar { display: none; }
+
+    /* Burbujas */
     .mensaje {
-        max-width: 85%; padding: 8px 12px; border-radius: 12px;
-        font-size: 0.92rem; line-height: 1.4; position: relative;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.1);
-        animation: pop 0.2s ease-out forwards;
+      max-width: 80%;
+      padding: 9px 13px;
+      border-radius: var(--radius);
+      font-size: 0.88rem;
+      line-height: 1.55;
+      /* Fade + pop suave */
+      opacity: 0;
+      animation: fadeUp 0.25s cubic-bezier(0.34,1.4,0.64,1) forwards;
+      word-break: break-word;
+    }
+    .bot {
+      align-self: flex-start;
+      background: var(--burbuja-bot);
+      border-top-left-radius: 4px;
+      border: 1px solid var(--borde);
+    }
+    .usuario {
+      align-self: flex-end;
+      background: var(--burbuja-yo);
+      border-top-right-radius: 4px;
+      border: 1px solid #1e4a30;
+    }
+    .hora {
+      font-size: 0.6rem;
+      color: var(--texto-dim);
+      margin-top: 5px;
+      display: block;
+      text-align: right;
+    }
+    .foto-recuerdo {
+      width: 100%; max-width: 260px;
+      border-radius: 12px; margin-top: 8px;
+      border: 2px solid var(--borde); display: block;
     }
 
-    @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-    .bot { align-self: flex-start; background: var(--burbuja-bot); border-top-left-radius: 0; }
-    .usuario { align-self: flex-end; background: var(--burbuja-yo); border-top-right-radius: 0; }
-
-    /* Barra de entrada anclada al fondo con seguridad */
-    .area-entrada { 
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        padding: 10px 10px calc(20px + env(safe-area-inset-bottom)); /* Más margen abajo */
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        background: var(--fondo-chat);
-        z-index: 20;
+    /* ========================================
+       INDICADOR ESCRIBIENDO — tres puntos animados
+       ======================================== */
+    #escribiendo {
+      padding: 0 14px 4px;
+      min-height: 20px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .dot-writing {
+      display: none;
+      gap: 4px;
+      align-items: center;
+      font-size: 0.7rem;
+      color: var(--texto-dim);
+      font-style: italic;
+    }
+    .dot-writing.visible { display: flex; }
+    .dot-writing span {
+      width: 5px; height: 5px;
+      background: var(--texto-dim);
+      border-radius: 50%;
+      animation: bounce-dot 1.2s ease-in-out infinite;
+    }
+    .dot-writing span:nth-child(2) { animation-delay: 0.2s; }
+    .dot-writing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce-dot {
+      0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+      40%          { transform: translateY(-5px); opacity: 1; }
     }
 
-    .input-wrapper { 
-        flex: 1;
-        background: white;
-        border-radius: 25px;
-        padding: 5px 15px;
-        display: flex;
-        align-items: center;
-        height: 45px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    /* ========================================
+       PANEL DE CHIPS — scroll horizontal en móvil
+       ======================================== */
+    #panel-comandos {
+      background: var(--fondo2);
+      border-top: 1px solid var(--borde);
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: row;
+      gap: 6px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      flex-shrink: 0;
+      /* Degradado derecho para sugerir scroll */
+      -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+      mask-image: linear-gradient(to right, black 85%, transparent 100%);
     }
-
-    input { 
-        width: 100%;
-        border: none;
-        outline: none;
-        font-size: 16px;
-        font-family: inherit;
+    #panel-comandos::-webkit-scrollbar { display: none; }
+    .chip {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      color: var(--verde);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 6px 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s, border-color 0.15s;
+      user-select: none;
+      /* Touch target mínimo 44px */
+      min-height: 32px;
+      display: flex;
+      align-items: center;
     }
+    .chip:active { transform: scale(0.93); background: #282828; }
+    .chip.locked { color: #555; border-color: #252525; }
+    .chip.locked::before { content: '🔒 '; }
 
-    .btn-enviar { 
-        background: var(--verde-whatsapp);
-        color: white;
-        border: none;
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        font-size: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
+    /* ========================================
+       ÁREA DE ENTRADA
+       ======================================== */
+    .area-entrada {
+      background: var(--fondo2);
+      border-top: 1px solid var(--borde);
+      padding: 8px 12px calc(10px + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
     }
+    .input-wrapper {
+      flex: 1;
+      background: #1e1e1e;
+      border: 1.5px solid var(--borde);
+      border-radius: 999px;
+      padding: 0 16px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+    .input-wrapper:focus-within { border-color: var(--verde); }
+    input {
+      width: 100%; border: none; outline: none;
+      background: transparent;
+      /* 16px mínimo para evitar zoom en iOS */
+      font-size: 16px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--texto);
+    }
+    input::placeholder { color: var(--texto-dim); font-size: 0.85rem; }
+    .btn-enviar {
+      background: var(--verde);
+      color: #000;
+      border: none;
+      /* Touch target 44x44 */
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      font-size: 17px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .btn-enviar:active { transform: scale(0.9); background: #00e094; }
 
+    /* ========================================
+       PANTALLA FINAL
+       ======================================== */
     #pantalla-final {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: #000; flex-direction: column; justify-content: center; align-items: center; z-index: 1000;
+      display: none;
+      position: fixed; inset: 0;
+      background: #000;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 24px 24px calc(24px + env(safe-area-inset-bottom));
+      text-align: center;
     }
-
     .titulo-rgb {
-        font-size: 13vw; font-weight: 800; text-align: center; line-height: 1.1;
-        background: linear-gradient(to right, #ff0, #0ff, #f0f, #fff, #ff0);
-        background-size: 200%; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        animation: rgb-anim 3s linear infinite;
+      font-family: 'Caveat', cursive;
+      font-size: clamp(3.2rem, 16vw, 7rem);
+      font-weight: 700;
+      line-height: 1;
+      background: linear-gradient(90deg, #ff6b9d, #ffd166, #00c07f, #6bcbff, #ff6b9d);
+      background-size: 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rgb-move 4s linear infinite;
     }
-</style>
+    @keyframes rgb-move { from { background-position: 0%; } to { background-position: 300%; } }
+    .subtitulo-final { color: #888; margin-top: 12px; font-size: 0.85rem; letter-spacing: 5px; text-transform: uppercase; }
+
+    /* Botón WS con pulso para llamar la atención */
+    .btn-ws {
+      margin-top: 30px;
+      padding: 15px 30px;
+      background: var(--verde);
+      color: #000;
+      text-decoration: none;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: none;
+      animation: pulse-ws 1.8s ease-in-out infinite;
+      /* Touch target */
+      min-height: 50px;
+      align-items: center;
+    }
+    @keyframes pulse-ws {
+      0%,100% { box-shadow: 0 0 0 0 rgba(0,192,127,0.5); }
+      50%      { box-shadow: 0 0 0 14px rgba(0,192,127,0); }
+    }
+    .btn-ws:active { opacity: 0.85; }
+    .firma { color: #2a2a2a; font-size: 0.7rem; margin-top: 40px; }
+
+    /* ========================================
+       ANIMACIONES PRINCIPALES
+       ======================================== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)  scale(1); }
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-5px); }
+      75%      { transform: translateX(5px); }
+    }
+    .shake { animation: shake 0.3s ease-in-out; }
+
+    /* ========================================
+       CONTADOR (dentro de burbuja de chat)
+       ======================================== */
+    #contador-banner { display: none; } /* ya no se usa como banner */
+    .contador-label { font-size: 0.65rem; color: #777; margin-top: 2px; }
+    .contador-valor {
+      font-size: 1.15rem; font-weight: 700; color: var(--verde);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+    .contador-bloque { text-align: center; }
+    .contador-sep { color: #444; font-size: 1.2rem; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
 
-    <div id="interfaz-chat">
-        <div class="cabecera">
-            <div class="avatar">🎂</div>
-            <div class="info"><h1>Julio (Bot)</h1><p>en línea</p></div>
-        </div>
-        <div id="contenedor-chat"></div>
-        <div id="escribiendo" class="escribiendo">Julio está escribiendo...</div>
-        <div class="area-entrada">
-            <div class="input-wrapper"><input type="text" id="entradaUsuario" placeholder="Escribe aquí..." autocomplete="off"></div>
-            <button class="btn-enviar" onclick="gestionarEntrada()">➤</button>
-        </div>
+<!-- =============================================
+     INTERFAZ PRINCIPAL DE CHAT
+     ============================================= -->
+<div id="app">
+
+  <!-- CABECERA -->
+  <div class="cabecera">
+    <div class="avatar">🎂</div>
+    <div class="cabecera-info">
+      <h1>Julio (Bot)</h1>
+      <p>en línea ahora ✨</p>
     </div>
+  </div>
 
-    <div id="pantalla-final">
-        <div class="titulo-rgb">¡FELIZ<br>CUMPLE<br>CLOE!</div>
-        <p style="color:white; margin-top:20px; letter-spacing: 2px; font-weight: 600;">✨ 17 AÑOS ✨</p>
-        <a href="#" id="link-ws" class="btn-ws">¡Mandar el texto del dulce que quieras!</a>
-        <button class="btn-volver" onclick="location.reload()">Regresar al chat</button>
+  <!-- MENSAJES -->
+  <div id="contenedor-chat"></div>
+  <div id="escribiendo">
+    <div class="dot-writing" id="dots">
+      <span></span><span></span><span></span>
+      <span style="margin-left:4px;font-size:0.7rem;color:#666">Julio está escribiendo</span>
     </div>
+  </div>
 
-    <script>
-        const chat = document.getElementById('contenedor-chat');
-        const entrada = document.getElementById('entradaUsuario');
-        const indicador = document.getElementById('escribiendo');
-        
-        const MI_TELEFONO = "34614147077"; 
-        const NOMBRE_FOTO = "recuerdo.jpg"; 
+  <!-- CONTADOR DE CUMPLEAÑOS -->
+  <div id="contador-banner" style="display:none"></div>
 
-        let paso = "LIBRE"; // Empezamos en modo libre
-        let juegoCompletado = false;
+  <!-- CHIPS DE COMANDOS (siempre visibles) -->
+  <div id="panel-comandos">
+    <!-- Los chips se renderizan dinámicamente según el estado del juego -->
+  </div>
 
-        const chistes = ["¿Qué le dice un jaguar a otro jaguar? ¡Jaguar you! 😂", "¿Cómo se dice pañuelo en japonés? Sakamoko. 👃", "¿Qué hace una abeja en el gimnasio? ¡Zumba! 🐝"];
-        const animos = ["¡Tú puedes Cloe! 💪", "¡Casi lo tienes! ✨", "¡Dale que tú sabes! 🔥"];
-        const felicitaciones = ["¡Felices 17, que sea un año increíble! 🥳", "¡A disfrutar de tu día! 🎂", "¡La persona más deportista que conozco! 🌟"];
+  <!-- INPUT -->
+  <div class="area-entrada">
+    <div class="input-wrapper">
+      <input type="text" id="entradaUsuario" placeholder="Escribe un comando o mensaje…" autocomplete="off">
+    </div>
+    <button class="btn-enviar" onclick="gestionarEntrada()" aria-label="Enviar">➤</button>
+  </div>
 
-        window.onload = () => {
-            setTimeout(() => enviarBot("¡Hola Cloe! 🥳 Bienvenida a tu chat de cumple."), 600);
-            setTimeout(() => enviarBot("Puedes probar comandos como <b>/chiste</b>, <b>/misterio</b>, <b>/cumple</b> o escribir tu nombre <b>cloe</b>."), 1400);
-            setTimeout(() => enviarBot("Eso sí, la <b>/foto</b> y el <b>/regalo</b> están bloqueados. Si los quieres, escribe <b>/jugar</b>."), 2200);
-        };
+</div>
 
-        function gestionarEntrada() {
-            const t = entrada.value.trim();
-            if(!t) return;
-            enviarUsuario(t);
-            entrada.value = "";
-            procesarLogica(t.toLowerCase());
+<!-- =============================================
+     PANTALLA FINAL (confetti + regalo)
+     ============================================= -->
+<div id="pantalla-final">
+  <div class="titulo-rgb">¡FELIZ<br>CUMPLE<br>CLOE!</div>
+  <p class="subtitulo-final">✨ 17 AÑOS ✨</p>
+  <a href="#" id="link-ws" class="btn-ws">¡Pídeme tu regalo por WhatsApp! 🎁</a>
+  <p class="firma">Hecho con dedicacion por Julio</p>
+</div>
+
+
+<script>
+  /* ============================================
+     CONFIGURACIÓN — EDITA SOLO ESTA SECCIÓN
+     ============================================ */
+  const CONFIG = {
+    telefonoJulio:  "34614147077",   // Tu número de WhatsApp (sin +)
+    fotoRecuerdo:   "recuerdo.jpg",  // Nombre de la imagen que subes junto al HTML
+  };
+
+  /* ============================================
+     CONTENIDO — PERSONALIZA A TU GUSTO
+     ============================================ */
+
+  // Chistes aleatorios (añade o quita los que quieras)
+  const CHISTES = [
+    "¿Qué le dice un jaguar a otro jaguar? <br><b>— Jaguar you!</b> 😂",
+    "¿Por qué los pájaros no usan Facebook? <br><b>— Porque ya tienen Twitter (X). 🐦</b>",
+    "¿Cómo se dice 'pañuelo' en japonés? <br><b>— Saka-moko. 🤧</b>",
+    "¿Qué hace una abeja en el gimnasio? <br><b>— ¡Zumba! 🐝</b>",
+    "¿Cómo se queda un mago después de comer? <br><b>— Magordito. 🎩</b>",
+    "¿Qué le dice el mar a la playa? <br><b>— Nada, la saluda y se va. 🌊</b>",
+  ];
+
+  // Frases personalizadas para Cloe — directas, sin cursilería
+  const FRASES = [
+    "Mejor compañera de rutas: tú. 🏔️",
+    "17 años y sin perder el ritmo. Hay que mantenerlo. ✨",
+    "Hoy no se aceptan quejas. 🎂",
+    "Cullera fue un 10. Ya toca organizar la siguiente. 🌊",
+    "Un año más que te debo una buena ruta. Lo apunto. 🗓️",
+    "hoy manda Cloe.",
+  ];
+
+  // Palabras de ánimo aleatorias (cuando acierte algo)
+  const APLAUSOS = ["¡Exacto! 🎯", "¡Correcto! 💪", "¡Eso es! 🌟", "¡Muy bien! 🔥", "¡Sin dudar! 💫"];
+
+  // Pequeños mensajes de error (cuando falle algo)
+  const ERRORES = [
+    "¡Casi! Prueba otra vez. 😅",
+    "Hmm... no del todo. 🤔",
+    "Error 404: respuesta incorrecta. 😂",
+    "Está mal, pero tu puedes",
+  ];
+
+  /* ============================================
+     ESTADO GLOBAL
+     ============================================ */
+  const chat       = document.getElementById('contenedor-chat');
+  const entrada    = document.getElementById('entradaUsuario');
+  const indicador  = document.getElementById('escribiendo');
+  const panelChips = document.getElementById('panel-comandos');
+
+  let paso           = "LIBRE";   // Estado actual del flujo de conversación
+  let juegoCompletado = false;    // ¿Ha superado el quiz?
+
+  /* ============================================
+     ARRANQUE: mensajes de bienvenida
+     ============================================ */
+  window.onload = () => {
+    renderChips();    // Dibujar chips iniciales
+
+    botDelayed("¡Hola Cloe! 🥳 Bienvenida a tu chat especial.", 500);
+    botDelayed("He bloqueado <b>/foto</b> y <b>/regalo</b> con un candado. 🔒", 2200);
+    botDelayed("Para desbloquearlos tienes que superar el reto: escribe <b>/jugar</b>.", 4200);
+    botDelayed("Mira los botones de abajo para ver todo lo que puedes hacer. Hay alguno que… mejor lo descubres tú. 👀", 6400);
+  };
+
+  /* ============================================
+     GESTIÓN DE ENTRADA DEL USUARIO
+     ============================================ */
+  function gestionarEntrada() {
+    const t = entrada.value.trim();
+    if (!t) return;
+    enviarUsuario(t);
+    entrada.value = "";
+    procesarLogica(t.toLowerCase());
+  }
+
+  // Enviar también con la tecla Enter
+  entrada.addEventListener("keypress", (e) => { if (e.key === "Enter") gestionarEntrada(); });
+
+  // Enviar al hacer clic en un chip
+  function enviarComando(cmd) {
+    enviarUsuario(cmd);
+    procesarLogica(cmd.toLowerCase());
+  }
+
+  /* ============================================
+     LÓGICA PRINCIPAL DE COMANDOS
+     ============================================ */
+  function procesarLogica(cmd) {
+    // Mostramos "escribiendo..." mientras el bot "piensa"
+    document.getElementById('dots').classList.add('visible');
+
+    setTimeout(() => {
+      document.getElementById('dots').classList.remove('visible');
+
+      /* --- COMANDOS SIEMPRE DISPONIBLES --- */
+
+      // /chiste → chiste aleatorio
+      if (cmd === "/chiste") {
+        enviarBot(aleatorio(CHISTES));
+        return;
+      }
+
+      // /frase → frase motivacional aleatoria
+      if (cmd === "/frase") {
+        enviarBot(aleatorio(FRASES));
+        return;
+      }
+
+      // /canto → bot "canta" la canción de cumpleaños línea a línea
+      if (cmd === "/canto") {
+        const versos = [
+          "🎤 Venga, que allá voy…",
+          "🎵 <i>Cumpleaños feliz…</i>",
+          "🎵 <i>Cumpleaños feliz…</i>",
+          "🎵 <i>Te deseamos todos…</i>",
+          "🎵 <i>¡Cumpleaños feliz, Cloe!</i> 🎂",
+          "…",
+          "Vale, reconozco que no tengo voz. 😬<br>Pero el intento cuenta, ¿no? 🎤",
+        ];
+        versos.forEach((v, i) => {
+          setTimeout(() => enviarBot(v), 300 + i * 1100);
+        });
+        return;
+      }
+
+      // /sorpresa → mensaje oculto especial
+      if (cmd === "/sorpresa") {
+        enviarBot("Aquí va un frase: eres una gran amiga Cloe. gracias por hacer que conociera las rutas, seguro que te ira muy bien este nuevo año. se que a veces es muy estresante todo pero tu puedes 🐺✨");
+        return;
+      }
+
+      // /stickers → stickers reales con imágenes (no se pueden robar 😂)
+      if (cmd === "/stickers") {
+        enviarBot("Mira mis stickers… bonitos, bueno en realidad no mucho. Pero estos no te los puedo dar, Son míos.");
+        // Stickers: mezcla de perros, gatos y lobos kawaii
+        // Stickers: fotos reales tiernas de animales (no kawaii exagerado)
+        const stickers = [
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/320px-YellowLabradorLooking_new.jpg", label: "Labrador 🐶" },
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/320px-Cat_November_2010-1a.jpg", label: "Gatete 🐱" },
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Dog_Breeds.jpg/320px-Dog_Breeds.jpg", label: "Perrito 🐕" },
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Kittyply_edit1.jpg/320px-Kittyply_edit1.jpg", label: "Minino 🐾" },
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Camponotus_flavomarginatus_ant.jpg/320px-Camponotus_flavomarginatus_ant.jpg", label: "Sorpresa 😂" },
+          { url: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/WelshCorgi.jpg/320px-WelshCorgi.jpg", label: "Corgi 🐶" },
+        ];
+        setTimeout(() => {
+          const html = `
+            <div style="margin-bottom:6px;font-size:0.8rem;color:#aaa">— Mis stickers (solo para ver) —</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:260px">
+              ${stickers.map(s => `
+                <div style="background:#1a1a1a;border:1px solid #333;border-radius:14px;padding:8px;text-align:center;cursor:default" title="No puedes robar estos cloe, intente buscar imagenes pero no quedaban tan bien">
+                  <img src="${s.url}" style="width:60px;height:60px;object-fit:contain;display:block;margin:0 auto"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                  <div style="display:none;font-size:2rem">${s.label.split(' ')[1]||'🐾'}</div>
+                  <div style="font-size:0.6rem;color:#666;margin-top:4px">${s.label}</div>
+                </div>`).join('')}
+            </div>`;
+          enviarBot(html);
+          setTimeout(() => enviarBot("¿A que quieres uno? no puedes. 😂🔒<br><small style='color:#666'>— enviados desde la bóveda de Julio</small>"), 1200);
+        }, 700);
+        return;
+      }
+
+      // /bolos → reto amistoso a bolos
+      if (cmd === "/bolos") {
+        const mensajes = [
+          "¿Bolos? 👀",
+          "Mira, te voy a ser sincero…",
+          "La última vez julio no derribo ninguno. 🎳",
+          "¿Pero crees de verdad que eso cambia algo?",
+          "soy imparcial, pero si tuviera que elegir creo que sera una victoria para ti.",
+          "tu puedes ganar Cloe. tienes mi confianza 🎳🔥",
+        ];
+        mensajes.forEach((m, i) => {
+          setTimeout(() => enviarBot(m), 300 + i * 1000);
+        });
+        return;
+      }
+
+      // Respuesta a "gracias" o "quiero"
+      if (cmd.includes("gracias") || cmd.includes("quiero")) {
+        enviarBot("¡Para eso estoy programado! A disfrutar. 😊✨");
+        return;
+      }
+
+      /* --- COMANDO /jugar → inicia el quiz --- */
+      if (cmd === "/jugar") {
+        if (juegoCompletado) {
+          enviarBot("Ya superaste el reto, campeona. 🏆 Usa <b>/foto</b> y <b>/regalo</b> libremente.");
+          return;
         }
+        paso = "Q1";
+        enviarBot("🎮 ¡Vamos allá! Son solo 4 preguntas. <br><br><b>Pregunta 1:</b> ¿Cuántos años cumples hoy? 🎂");
+        renderChips();
+        return;
+      }
 
-        entrada.addEventListener("keypress", (e) => { if(e.key === "Enter") gestionarEntrada(); });
-
-        function procesarLogica(cmd) {
-            indicador.style.display = "block";
-            setTimeout(() => {
-                indicador.style.display = "none";
-
-                // PRIORIDAD 1: Comandos que siempre funcionan
-                if(cmd === "/chiste") { enviarBot(chistes[Math.floor(Math.random() * chistes.length)]); return; }
-                if(cmd === "/cumple") { enviarBot(felicitaciones[Math.floor(Math.random() * felicitaciones.length)]); return; }
-                if(cmd === "/misterio") { enviarBot("¡Eyyyy! 🕵️‍♀️ Esto es un misterio... ¡ni tú ni yo sabemos qué es! 😂"); return; }
-                if(cmd === "cloe") { enviarBot("<b>Cloe:</b> 17 años hoy, fan de los lobos 🐺 y una gran amiga. ✨"); return; }
-                if(cmd === "/ayuda") { enviarBot("Prueba: /jugar, /chiste, /misterio, /cumple o cloe.<br>Bloqueados: /foto y /regalo."); return; }
-
-                // PRIORIDAD 2: Control de Foto y Regalo
-                if(cmd === "/foto") {
-                    if(juegoCompletado) {
-                        enviarBot("Cargando tu recuerdo... 📸");
-                        setTimeout(() => {
-                            enviarBot(`<img src="${NOMBRE_FOTO}" class="foto-recuerdo" onerror="this.alt='Sube recuerdo.jpg a tu carpeta.'">`);
-                        }, 1000);
-                    } else {
-                        enviarBot("Comando bloqueado 🔒. Tienes que superar el reto primero. Escribe <b>/jugar</b>.");
-                        vibrarChat();
-                    }
-                    return;
-                }
-
-                if(cmd === "/regalo") {
-                    if(juegoCompletado) {
-                        enviarBot("¡Concedido! 🍬 Escribe el nombre del dulce que quieres:");
-                        paso = "DESEO";
-                    } else {
-                        enviarBot("¡Regalo bloqueado! 🛑 Demuestra que eres Cloe superando el test. Escribe <b>/jugar</b>.");
-                        vibrarChat();
-                    }
-                    return;
-                }
-
-                // PRIORIDAD 3: El Juego
-                if(cmd === "/jugar") {
-                    paso = "Q1";
-                    enviarBot("¡Bien! Empezamos el reto. Pregunta 1: ¿Cuántos años cumples hoy?");
-                    return;
-                }
-
-                if(paso === "Q1") {
-                    if(cmd.includes("17")) { paso = "Q2"; enviarBot(animos[Math.floor(Math.random() * animos.length)]); setTimeout(() => enviarBot("Pregunta 2: ¿Cuál es tu animal favorito? (Pista: 🐺)"), 800); }
-                    else { enviarBot("¡Nop! Pon tu edad real. 😂"); vibrarChat(); }
-                    return;
-                }
-                if(paso === "Q2") {
-                    if(cmd.includes("lobo")) { paso = "Q3"; enviarBot("¡Eso es! 🐺 Pregunta 3: ¿Dónde fue nuestra última ruta?"); }
-                    else { enviarBot("Pista: Empieza por L... 🐺"); vibrarChat(); }
-                    return;
-                }
-                if(paso === "Q3") {
-                    if(cmd.includes("cullera") || cmd.includes("ruta")) { paso = "Q4"; enviarBot("¡Increíble! 🏔️ Última: ¿**Perros** 🐶 o **Gatos** 🐱?"); }
-                    else { enviarBot("Pista: Cerca del mar... 🌊"); vibrarChat(); }
-                    return;
-                }
-                if(paso === "Q4") {
-                    if(cmd.includes("perros") || cmd.includes("perro")) { 
-                        juegoCompletado = true;
-                        paso = "LIBRE";
-                        enviarBot("¡RETO SUPERADO! 🎖️ Ya puedes usar <b>/foto</b> y <b>/regalo</b>."); 
-                    } else { enviarBot("Incorrecto... ¡eres del equipo 🐶!"); vibrarChat(); }
-                    return;
-                }
-
-                if(paso === "DESEO") {
-                    const link = `https://wa.me/${MI_TELEFONO}?text=${encodeURIComponent("Julio, soy Cloe! Quiero: " + cmd)}`;
-                    document.getElementById('link-ws').href = link;
-                    document.getElementById('link-ws').style.display = 'inline-block';
-                    enviarBot("¡Hecho! Pulsa el botón verde de abajo para pedírmelo.");
-                    setTimeout(mostrarPantallaFinal, 2500);
-                    return;
-                }
-
-                enviarBot("No entiendo eso. Prueba con <b>/ayuda</b>.");
-            }, 800);
+      /* --- FLUJO DEL QUIZ --- */
+      if (paso === "Q1") {
+        if (cmd.includes("17")) {
+          paso = "Q2";
+          enviarBot(`${aleatorio(APLAUSOS)} <br><br><b>Pregunta 2:</b> ¿Cuál es tu animal favorito? (Pista: 🐺)`);
+        } else {
+          errorBot(aleatorio(ERRORES));
         }
+        return;
+      }
 
-        function vibrarChat() {
-            chat.style.animation = "shake 0.5s";
-            setTimeout(() => chat.style.animation = "", 500);
+      if (paso === "Q2") {
+        if (cmd.includes("lobo")) {
+          paso = "Q3";
+          enviarBot(`${aleatorio(APLAUSOS)} <br><br><b>Pregunta 3:</b> ¿Dónde fue nuestra última ruta juntos? (Pista: 🌊)`);
+        } else {
+          errorBot("Pista extra: empieza por L y hace ¡auuu! 🐺");
         }
+        return;
+      }
 
-        function enviarBot(h) {
-            const d = document.createElement('div'); d.className='mensaje bot'; d.innerHTML=h;
-            chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+      if (paso === "Q3") {
+        if (cmd.includes("cullera")) {
+          paso = "Q4";
+          enviarBot(`${aleatorio(APLAUSOS)} <br><br><b>Última pregunta:</b> ¿Prefieres 🐶 <b>perros</b> o 🐱 <b>gatos</b>?`);
+        } else {
+          errorBot("Casi… piensa en playas y agua salada. 🏖️");
         }
+        return;
+      }
 
-        function enviarUsuario(t) {
-            const d = document.createElement('div'); d.className='mensaje usuario'; d.innerText=t;
-            chat.appendChild(d); chat.scrollTop = chat.scrollHeight;
+      if (paso === "Q4") {
+        if (cmd.includes("perro")) {
+          juegoCompletado = true;
+          paso = "LIBRE";
+          renderChips(); // Actualizar chips — ya sin candado
+          enviarBot("🎖️ ¡RETO SUPERADO! Respuestas perfectas. <br>Ya puedes usar <b>/foto</b> y <b>/regalo</b>. ¡A disfrutar! 🎉");
+        } else {
+          errorBot("Sabes perfectamente que los 🐶 son tus favoritos. 😂");
         }
+        return;
+      }
 
-        function mostrarPantallaFinal() {
-            document.getElementById('interfaz-chat').style.display = 'none';
-            document.getElementById('pantalla-final').style.display = 'flex';
-            setInterval(() => {
-                confetti({ particleCount: 8, angle: 60, spread: 70, origin: { x: 0, y: 0.8 }, colors: ['#0ff', '#f0f', '#ff0', '#fff'], zIndex: 9999 });
-                confetti({ particleCount: 8, angle: 120, spread: 70, origin: { x: 1, y: 0.8 }, colors: ['#0ff', '#f0f', '#ff0', '#fff'], zIndex: 9999 });
-            }, 150);
+      /* --- COMANDOS DE PREMIO (requieren juego completado) --- */
+
+      // /foto → muestra la foto de Cullera
+      if (cmd === "/foto") {
+        if (juegoCompletado) {
+          enviarBot("Buscando en el álbum… 📸");
+          setTimeout(() => {
+            enviarBot(
+              `¡Aquí está, nuestro momentazo en Cullera! ✨ <br>
+               <img src="${CONFIG.fotoRecuerdo}" class="foto-recuerdo" 
+                    alt="Recuerdo de Cullera" 
+                    onerror="this.outerHTML='<p style=\'color:#888;font-size:0.8rem;\'>📷 (Sube el archivo recuerdo.jpg junto al HTML para ver la foto)</p>'">`
+            );
+          }, 1500);
+        } else {
+          errorBot("Bloqueado 🔒 — Supera el reto con <b>/jugar</b> primero.");
         }
-    </script>
+        return;
+      }
+
+      // /regalo → pide un deseo para enviar por WhatsApp
+      if (cmd === "/regalo") {
+        if (juegoCompletado) {
+          paso = "DESEO";
+          enviarBot("🎁 ¿Qué dulces te gustarian? se que te gustan unos especificos. pero no se cuales jajaja 🍬");
+        } else {
+          errorBot("¡No tan rápido! 🔒 Completa el reto con <b>/jugar</b>.");
+        }
+        return;
+      }
+
+      /* --- ESTADO DESEO: recoge el capricho y lanza pantalla final --- */
+      if (paso === "DESEO") {
+        const link = `https://wa.me/${CONFIG.telefonoJulio}?text=${encodeURIComponent("¡Hola Julio! Soy Cloe 🎂 y quiero: " + cmd)}`;
+        document.getElementById('link-ws').href  = link;
+        document.getElementById('link-ws').style.display = 'flex';
+        enviarBot("🎉 ¡Perfecto! Ahora mira la pantalla final… te espero ahí.");
+        setTimeout(mostrarPantallaFinal, 2800);
+        return;
+      }
+
+      // /futuro → contador bloqueado (regalo misterioso)
+      if (cmd === "/futuro") {
+        enviarBot("🔒 <b>ACCESO DENEGADO</b>");
+        setTimeout(() => enviarBot("Este comando forma parte de otro regalo. diculpa cloe no tengo acceso"), 900);
+        setTimeout(() => enviarBot("No puedo darte más información. ordenes de julio"), 1900);
+        setTimeout(() => {
+          enviarBot("Solo te puedo decir… que el tiempo corre. ⏳");
+          // Mostrar contador SOLO dentro del chat como burbuja
+          setTimeout(() => enviarBot(generarContadorHTML()), 800);
+        }, 3000);
+        return;
+      }
+
+      // /misterio → mensaje críptico, no hay más info
+      if (cmd === "/misterio") {
+        const frases = [
+          "Eyyy… esto es un misterio.",
+          "Ni tú ni yo sabemos qué hay aquí.",
+          "Lo siento, no puedo ayudarte con esto. 🤷",
+          "Algunos secretos son secretos por algo.",
+          "🌑",
+        ];
+        frases.forEach((f, i) => setTimeout(() => enviarBot(f), 400 + i * 900));
+        return;
+      }
+
+      // /cloe → mensaje personalizado para ella
+      if (cmd === "/cloe") {
+        setTimeout(() => enviarBot("Cloe."), 300);
+        setTimeout(() => enviarBot("Hace 17 años apareció alguien que roba stickers, le gustan los deportes  y elige rutas muy buenas."), 1300);
+        setTimeout(() => enviarBot("la mejor companera de rutas."), 2500);
+        setTimeout(() => enviarBot("Así que… feliz cumpleaños. 🐺"), 3600);
+        setTimeout(() => enviarBot("<small style='color:#555'>— Julio (el del bot)</small>"), 4500);
+        return;
+      }
+
+      /* --- FALLBACK: comando desconocido --- */
+      enviarBot("No entiendo eso 🤔 — Usa uno de los botones de abajo o prueba:<br><b>/jugar</b>, <b>/chiste</b>, <b>/frase</b>, <b>/canto</b>, <b>/stickers</b>, <b>/bolos</b>, <b>/futuro</b>, <b>/misterio</b> o <b>/cloe</b>.");
+
+    }, 1000 + Math.random() * 400); // Pequeña variación para que parezca más natural
+  }
+
+  /* ============================================
+     RENDERIZAR CHIPS DE COMANDOS
+     Cambia según si el juego está completado o no
+     ============================================ */
+  function renderChips() {
+    panelChips.innerHTML = "";
+
+    // Comandos siempre libres
+    const libres = [
+      {label:"/chiste", cmd:"/chiste"},
+      {label:"/frase", cmd:"/frase"},
+      {label:"/canto 🎤", cmd:"/canto"},
+      {label:"/stickers", cmd:"/stickers"},
+      {label:"/bolos 🎳", cmd:"/bolos"},
+      {label:"/cloe 🐺", cmd:"/cloe"},
+      {label:"/misterio 🌑", cmd:"/misterio"},
+      {label:"/futuro 🔒", cmd:"/futuro"},
+    ];
+    libres.forEach(({label, cmd}) => {
+      const c = document.createElement("button");
+      c.className = "chip";
+      c.textContent = label;
+      c.onclick = () => enviarComando(cmd);
+      panelChips.appendChild(c);
+    });
+
+    // Jugar (solo si no ha terminado)
+    if (!juegoCompletado) {
+      const c = document.createElement("button");
+      c.className = "chip";
+      c.textContent = "/jugar 🎮";
+      c.onclick = () => enviarComando("/jugar");
+      panelChips.appendChild(c);
+    }
+
+    // /foto y /regalo: con o sin candado según estado
+    [{label:"/foto 📸", cmd:"/foto"}, {label:"/regalo 🎁", cmd:"/regalo"}].forEach(({label, cmd}) => {
+      const c = document.createElement("button");
+      c.className = juegoCompletado ? "chip" : "chip locked";
+      c.textContent = label;
+      c.onclick = () => enviarComando(cmd);
+      panelChips.appendChild(c);
+    });
+  }
+
+  /* ============================================
+     HELPERS: enviar mensajes
+     ============================================ */
+
+  // Mensaje del bot con timestamp
+  function enviarBot(html) {
+    const d = document.createElement('div');
+    d.className = 'mensaje bot';
+    d.innerHTML = html + `<span class="hora">${horaActual()}</span>`;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // Mensaje del usuario con timestamp
+  function enviarUsuario(texto) {
+    const d = document.createElement('div');
+    d.className = 'mensaje usuario';
+    d.innerText = texto;
+    d.innerHTML += `<span class="hora">${horaActual()} ✓✓</span>`;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  // Mensaje de error + efecto shake
+  function errorBot(msg) {
+    enviarBot(msg);
+    chat.classList.add('shake');
+    setTimeout(() => chat.classList.remove('shake'), 350);
+  }
+
+  // Mensaje del bot con retraso inicial (para la bienvenida)
+  function botDelayed(msg, delay) {
+    setTimeout(() => {
+      document.getElementById('dots').classList.add('visible');
+      setTimeout(() => {
+        document.getElementById('dots').classList.remove('visible');
+        enviarBot(msg);
+      }, 800);
+    }, delay);
+  }
+
+  /* ============================================
+     HELPERS VARIOS
+     ============================================ */
+
+  // Devuelve un elemento aleatorio de un array
+  function aleatorio(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // Devuelve la hora actual en formato HH:MM
+  function horaActual() {
+    return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* ============================================
+     CONTADOR DE CUMPLEAÑOS
+     Muestra tiempo restante hasta medianoche de hoy
+     o hasta el próximo cumpleaños (28 de febrero)
+     ============================================ */
+  // Cuenta atrás fija hacia el 28 de febrero de 2027 (próximo cumple de Cloe)
+  const OBJETIVO_FUTURO = new Date(2027, 1, 28, 0, 0, 0); // 28-feb-2027 medianoche
+
+  function calcularContador() {
+    const ahora = new Date();
+    const diff  = OBJETIVO_FUTURO - ahora;
+    if (diff <= 0) return { dias: 0, h: 0, m: 0, s: 0 };
+    const dias = Math.floor(diff / 86_400_000);
+    const h    = Math.floor((diff % 86_400_000) / 3_600_000);
+    const m    = Math.floor((diff % 3_600_000) / 60_000);
+    const s    = Math.floor((diff % 60_000) / 1_000);
+    return { dias, h, m, s };
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  // Genera el HTML del contador como burbuja de chat (snapshot, no live)
+  function generarContadorHTML() {
+    const c = calcularContador();
+    return `
+      <div style="margin-bottom:6px;font-size:0.75rem;color:var(--rosa);font-weight:600">🔒 Cuenta atrás — 28 feb 2027</div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div class="contador-bloque"><div class="contador-valor">${c.dias}</div><div class="contador-label">días</div></div>
+        <div class="contador-sep">:</div>
+        <div class="contador-bloque"><div class="contador-valor">${pad(c.h)}</div><div class="contador-label">h</div></div>
+        <div class="contador-sep">:</div>
+        <div class="contador-bloque"><div class="contador-valor">${pad(c.m)}</div><div class="contador-label">min</div></div>
+        <div class="contador-sep">:</div>
+        <div class="contador-bloque"><div class="contador-valor">${pad(c.s)}</div><div class="contador-label">seg</div></div>
+      </div>
+      <div style="font-size:0.65rem;color:#555;margin-top:8px">Para saber más… tendrás que esperar. 🌑</div>`;
+  }
+
+  /* ============================================
+     PANTALLA FINAL CON CONFETTI
+     ============================================ */
+  function mostrarPantallaFinal() {
+    document.getElementById('app').style.display = 'none';
+    const pf = document.getElementById('pantalla-final');
+    pf.style.display = 'flex';
+
+    // Confetti durante 15 segundos
+    const end = Date.now() + 15_000;
+    const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1001 };
+
+    const interval = setInterval(() => {
+      const timeLeft = end - Date.now();
+      if (timeLeft <= 0) return clearInterval(interval);
+
+      const count = 50 * (timeLeft / 15_000);
+      confetti({ ...defaults, particleCount: count, origin: { x: Math.random() * 0.4,       y: Math.random() - 0.2 } });
+      confetti({ ...defaults, particleCount: count, origin: { x: 0.6 + Math.random() * 0.4, y: Math.random() - 0.2 } });
+    }, 250);
+  }
+</script>
 </body>
 </html>
